@@ -1,0 +1,31 @@
+spring:
+  cloud:
+    loadbalancer:
+      ribbon:
+        enabled: false
+    gateway:
+      routes:
+        - id: vets-service
+          uri: lb://vets-service
+          predicates:
+            - Path=/api/vet/**
+          filters:
+            - StripPrefix=2
+        - id: visits-service
+          uri: lb://pets-service
+          predicates:
+            - Path=/api/visit/**
+          filters:
+            - StripPrefix=2
+        - id: owner-service
+          uri: lb://owner-service
+          predicates:
+            - Path=/api/customer/**
+          filters:
+            - StripPrefix=2
+        - id: pets-service
+          uri: lb://pets-service
+          predicates:
+            - Path=/api/pet/**
+          filters:
+            - StripPrefix=2
