@@ -90,6 +90,11 @@
             <groupId>de.codecentric</groupId>
             <artifactId>chaos-monkey-spring-boot</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.72</version>
+        </dependency>
 
         <!-- Testing -->
         <dependency>

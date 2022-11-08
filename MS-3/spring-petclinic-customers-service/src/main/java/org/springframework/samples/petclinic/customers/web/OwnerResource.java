@@ -15,15 +15,21 @@
  */
 package org.springframework.samples.petclinic.customers.web;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.samples.petclinic.customers.model.Owner;
 import org.springframework.samples.petclinic.customers.model.OwnerRepository;
+import org.springframework.samples.petclinic.customers.model.Pet;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import javax.validation.Valid;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +46,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 class OwnerResource {
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     private final OwnerRepository ownerRepository;
 
@@ -86,4 +95,33 @@ class OwnerResource {
         log.info("Saving owner {}", ownerModel);
         ownerRepository.save(ownerModel);
     }
+
+    @GetMapping(value = "getOwnerDetail/{ownerId}")
+    public String getOwnerDetail(@PathVariable("ownerId") int ownerId) {
+        Optional<Owner> ownerOptional = ownerRepository.findById(ownerId);
+        Owner owner = ownerOptional.get();
+        JSONObject ownerJson = new JSONObject();
+        ownerJson.put("id", owner.getId());
+        ownerJson.put("firstName", owner.getFirstName());
+        ownerJson.put("lastName", owner.getLastName());
+        ownerJson.put("city", owner.getCity());
+        ownerJson.put("address", owner.getAddress());
+        ownerJson.put("telephone", owner.getTelephone());
+        List<Pet> pets = owner.getPets();
+        JSONArray petArray = new JSONArray();
+        for (Pet pet : pets) {
+            JSONObject petJson = new JSONObject();
+            petJson.put("pet_id", pet.getId());
+            petJson.put("birth_date", pet.getBirthDate());
+            petJson.put("pet_type", pet.getType());
+            String uri="http://visits-service/getVisitsByPetId/"+ownerId;
+            String visitsArrayString = restTemplate.getForEntity(uri, String.class).getBody();
+            JSONArray visitsArray = JSONArray.parseArray(visitsArrayString);
+            petJson.put("visits", visitsArray);
+            petArray.add(petJson);
+        }
+        ownerJson.put("pets", petArray);
+        return ownerJson.toJSONString();
+    }
+
 }

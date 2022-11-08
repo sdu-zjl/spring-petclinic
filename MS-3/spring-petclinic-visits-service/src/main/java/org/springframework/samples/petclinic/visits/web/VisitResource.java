@@ -18,6 +18,8 @@ package org.springframework.samples.petclinic.visits.web;
 import java.util.List;
 import javax.validation.Valid;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -68,6 +70,21 @@ class VisitResource {
    public Visits visitsMultiGet(@RequestParam("petId") List<Integer> petIds) {
         final List<Visit> byPetIdIn = visitRepository.findByPetIdIn(petIds);
         return new Visits(byPetIdIn);
+    }
+
+
+    @GetMapping("getVisitsByPetId/{petId}")
+    public String getVisitsByPetId(@PathVariable("petId") int petId) {
+        List<Visit> visits= visitRepository.findByPetId(petId);
+        JSONArray visitsArray = new JSONArray();
+        for (Visit visit : visits) {
+            JSONObject visitJson = new JSONObject();
+            visitJson.put("data", visit.getDate());
+            visitJson.put("description", visit.getDescription());
+            visitsArray.add(visitJson);
+        }
+        return visitsArray.toJSONString();
+
     }
 
     @Value

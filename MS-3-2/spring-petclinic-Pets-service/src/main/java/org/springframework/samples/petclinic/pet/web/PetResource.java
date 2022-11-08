@@ -15,6 +15,8 @@
  */
 package org.springframework.samples.petclinic.pet.web;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -23,8 +25,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.samples.petclinic.pet.model.Pet;
 import org.springframework.samples.petclinic.pet.model.PetRepository;
 import org.springframework.samples.petclinic.pet.model.PetType;
+import org.springframework.samples.petclinic.pet.model.Visit;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -99,10 +103,31 @@ class PetResource {
         return new Pets(byOwnerId);
     }
 
+    @GetMapping("owner/getPetDetail/{ownerId}")
+    public String getPetDetail(@PathVariable("ownerId")  Integer  ownerId) {
+        List<Pet> byOwnerId = petRepository.findByOwnerId(ownerId);
+        JSONArray petArray = new JSONArray();
+        for (Pet pet : byOwnerId) {
+            JSONObject petJson = new JSONObject();
+            petJson.put("pet_id", pet.getId());
+            petJson.put("birth_date", pet.getBirthDate());
+            petJson.put("pet_type", pet.getType().getName());
+            Collection<Visit> visits = pet.getVisits();
+            JSONArray visitsArray = new JSONArray();
+            for (Visit visit : visits) {
+                JSONObject visitJson = new JSONObject();
+                visitJson.put("data", visit.getDate());
+                visitJson.put("description", visit.getDescription());
+                visitsArray.add(visitJson);
+            }
+            petJson.put("visits", visitsArray);
+            petArray.add(petJson);
+        }
+        return petArray.toJSONString();
+    }
+
     @Value
     static class Pets {
         List<Pet> items;
     }
-
-
 }
